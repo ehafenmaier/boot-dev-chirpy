@@ -11,8 +11,9 @@ func main() {
 	// Create a new ServeMux
 	mux := http.NewServeMux()
 
-	// Register the handler function for the root URL pattern
-	mux.Handle("/", http.FileServer(http.Dir(".")))
+	// Register handler functions
+	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir("."))))
+	mux.HandleFunc("/healthz", healthCheckHandler)
 
 	// Create new server instance
 	srv := &http.Server {
@@ -23,4 +24,11 @@ func main() {
 	// Run the server
 	log.Printf("Server started on port %s", port)
 	log.Fatal(srv.ListenAndServe())
+}
+
+// Handler function for health check endpoint
+func healthCheckHandler(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte(http.StatusText(http.StatusOK)))
 }
