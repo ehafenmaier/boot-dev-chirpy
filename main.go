@@ -25,8 +25,8 @@ func main() {
 	// Register handler functions
 	mux.Handle("/app/", http.StripPrefix("/app/", cfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))))
 	mux.HandleFunc("GET /api/healthz", healthCheckHandler)
-	mux.HandleFunc("GET /api/metrics", cfg.hitsHandler)
-	mux.HandleFunc("POST /api/reset", cfg.resetHandler)
+	mux.HandleFunc("GET /admin/metrics", cfg.hitsHandler)
+	mux.HandleFunc("POST /admin/reset", cfg.resetHandler)
 
 	// Create new server instance
 	srv := &http.Server{
@@ -47,13 +47,17 @@ func healthCheckHandler(rw http.ResponseWriter, rq *http.Request) {
 }
 
 func (cfg *apiConfig) hitsHandler(rw http.ResponseWriter, rq *http.Request) {
-	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	rw.WriteHeader(http.StatusOK)
-	rw.Write([]byte(fmt.Sprintf("Hits: %d", cfg.fileserverHits.Load())))
+	body := "<html><body><h1>Welcome, Chirpy Admin</h1><p>" +
+		"Chirpy has been visited %d times!" +
+		"</p></body></html>"
+	rw.Write([]byte(fmt.Sprintf(body, cfg.fileserverHits.Load())))
 }
 
 func (cfg *apiConfig) resetHandler(rw http.ResponseWriter, rq *http.Request) {
 	cfg.fileserverHits.Store(0)
+	log.Printf("Hits reset to 0")
 	rw.WriteHeader(http.StatusOK)
 }
 
