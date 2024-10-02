@@ -24,12 +24,12 @@ func main() {
 
 	// Register handler functions
 	mux.Handle("/app/", http.StripPrefix("/app/", cfg.middlewareMetricsInc(http.FileServer(http.Dir(".")))))
-	mux.HandleFunc("GET /healthz", healthCheckHandler)
-	mux.HandleFunc("GET /metrics", cfg.hitsHandler)
-	mux.HandleFunc("POST /reset", cfg.resetHandler)
+	mux.HandleFunc("GET /api/healthz", healthCheckHandler)
+	mux.HandleFunc("GET /api/metrics", cfg.hitsHandler)
+	mux.HandleFunc("POST /api/reset", cfg.resetHandler)
 
 	// Create new server instance
-	srv := &http.Server {
+	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
 	}
