@@ -26,6 +26,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", healthCheckHandler)
 	mux.HandleFunc("GET /admin/metrics", cfg.hitsHandler)
 	mux.HandleFunc("POST /admin/reset", cfg.resetHandler)
+	mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
 
 	// Create new server instance
 	srv := &http.Server{
