@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Boot Dev Chirpy",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
