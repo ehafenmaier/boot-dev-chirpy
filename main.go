@@ -13,7 +13,7 @@ import (
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
-	dbQueries      *database.Queries
+	db             *database.Queries
 }
 
 func main() {
@@ -40,7 +40,7 @@ func main() {
 	// Create a new apiConfig instance
 	cfg := apiConfig{
 		fileserverHits: atomic.Int32{},
-		dbQueries:      database.New(db),
+		db:             database.New(db),
 	}
 
 	// Register handler functions
@@ -49,6 +49,7 @@ func main() {
 	mux.HandleFunc("GET /admin/metrics", cfg.hitsHandler)
 	mux.HandleFunc("POST /admin/reset", cfg.resetHandler)
 	mux.HandleFunc("POST /api/validate_chirp", validateChirpHandler)
+	mux.HandleFunc("POST /api/users", cfg.createUserHandler)
 
 	// Create new server instance
 	srv := &http.Server{
