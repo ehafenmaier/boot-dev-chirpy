@@ -6,16 +6,8 @@ import (
 	"strings"
 )
 
-type parameters struct {
-	Body string `json:"body"`
-}
-
 type returnError struct {
 	Error string `json:"error"`
-}
-
-type returnCleaned struct {
-	CleanedBody string `json:"cleaned_body"`
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) error {

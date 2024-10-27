@@ -6,12 +6,20 @@ import (
 	"net/http"
 )
 
+type validateChirpParams struct {
+	Body string `json:"body"`
+}
+
+type returnCleaned struct {
+	CleanedBody string `json:"cleaned_body"`
+}
+
 func validateChirpHandler(rw http.ResponseWriter, rq *http.Request) {
 	// Set response content type
 	rw.Header().Set("Content-Type", "application/json")
 
 	decoder := json.NewDecoder(rq.Body)
-	params := parameters{}
+	params := validateChirpParams{}
 	err := decoder.Decode(&params)
 	if err != nil {
 		err = respondWithError(rw, http.StatusInternalServerError, "Invalid request payload")
@@ -34,6 +42,7 @@ func validateChirpHandler(rw http.ResponseWriter, rq *http.Request) {
 	respBody := returnCleaned{
 		CleanedBody: replaceBadWords(params.Body),
 	}
+
 	data, err := json.Marshal(respBody)
 	if err != nil {
 		err = respondWithError(rw, http.StatusInternalServerError, "Error marshalling response")
@@ -42,6 +51,7 @@ func validateChirpHandler(rw http.ResponseWriter, rq *http.Request) {
 		}
 		return
 	}
+
 	rw.WriteHeader(http.StatusOK)
 	_, err = rw.Write(data)
 	if err != nil {
