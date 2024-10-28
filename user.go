@@ -71,7 +71,7 @@ func (cfg *apiConfig) createUserHandler(rw http.ResponseWriter, rq *http.Request
 		return
 	}
 
-	rw.WriteHeader(http.StatusOK)
+	rw.WriteHeader(http.StatusCreated)
 	_, err = rw.Write(data)
 	if err != nil {
 		err = respondWithError(rw, http.StatusInternalServerError, "Error writing response")
