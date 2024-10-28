@@ -62,22 +62,8 @@ func (cfg *apiConfig) createUserHandler(rw http.ResponseWriter, rq *http.Request
 	}
 
 	// Return user
-	data, err := json.Marshal(user)
+	err = respondWithJSON(rw, http.StatusCreated, user)
 	if err != nil {
-		err = respondWithError(rw, http.StatusInternalServerError, "Error marshalling response")
-		if err != nil {
-			log.Printf("Error responding: %v", err)
-		}
-		return
-	}
-
-	rw.WriteHeader(http.StatusCreated)
-	_, err = rw.Write(data)
-	if err != nil {
-		err = respondWithError(rw, http.StatusInternalServerError, "Error writing response")
-		if err != nil {
-			log.Printf("Error responding: %v", err)
-		}
-		return
+		log.Printf("Error responding: %v", err)
 	}
 }
