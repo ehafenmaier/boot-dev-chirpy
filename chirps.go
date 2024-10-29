@@ -109,3 +109,43 @@ func (cfg *apiConfig) getChirpsHandler(rw http.ResponseWriter, rq *http.Request)
 		log.Printf("Error responding: %v", err)
 	}
 }
+
+func (cfg *apiConfig) getChirpHandler(rw http.ResponseWriter, rq *http.Request) {
+	// Set response content type
+	rw.Header().Set("Content-Type", "application/json")
+
+	// Get chirp ID from URL
+	id, err := uuid.Parse(rq.PathValue("id"))
+	if err != nil {
+		err = respondWithError(rw, http.StatusBadRequest, "Invalid chirp ID")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Get chirp from database
+	dbChirp, err := cfg.db.GetChirpById(rq.Context(), id)
+	if err != nil {
+		err = respondWithError(rw, http.StatusNotFound, "Chirp not found")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Map database chirp to Chirp struct
+	chirp := Chirp{
+		ID:        dbChirp.ID,
+		CreatedAt: dbChirp.CreatedAt,
+		UpdatedAt: dbChirp.UpdatedAt,
+		Body:      dbChirp.Body,
+		UserID:    dbChirp.UserID,
+	}
+
+	// Return chirp
+	err = respondWithJSON(rw, http.StatusOK, chirp)
+	if err != nil {
+		log.Printf("Error responding: %v", err)
+	}
+}
