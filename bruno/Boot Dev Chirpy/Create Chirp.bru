@@ -1,0 +1,18 @@
+meta {
+  name: Create Chirp
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/chirps
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "body": "This is a KERFUFFLE opinion I need to Fornax with the world",
+    "user_id": "30213d24-b3b4-4a2e-8b92-3032cefea93a"
+  }
+}
