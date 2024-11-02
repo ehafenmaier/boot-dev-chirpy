@@ -7,42 +7,59 @@ import (
 )
 
 func TestMakeJWT(t *testing.T) {
-	userID := uuid.New()
-	tokenSecret := "mysecret"
-	expiresIn := time.Hour
-
-	token, err := MakeJWT(userID, tokenSecret, expiresIn)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	tests := []struct {
+		name        string
+		userID      uuid.UUID
+		tokenSecret string
+		expiresIn   time.Duration
+		wantErr     bool
+	}{
+		{"ValidToken", uuid.New(), "mysecret", time.Hour, false},
+		{"EmptySecret", uuid.New(), "", time.Hour, true},
+		{"ZeroExpiration", uuid.New(), "mysecret", 0, false},
 	}
 
-	if len(token) == 0 {
-		t.Fatalf("expected token to be non-empty")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token, err := MakeJWT(tt.userID, tt.tokenSecret, tt.expiresIn)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MakeJWT() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && len(token) == 0 {
+				t.Errorf("expected token to be non-empty")
+			}
+		})
 	}
 }
 
 func TestValidateJWT(t *testing.T) {
-	userID := uuid.New()
-	tokenSecret := "mysecret"
-	expiresIn := time.Hour
+	validUserID := uuid.New()
+	validTokenSecret := "mysecret"
+	validToken, _ := MakeJWT(validUserID, validTokenSecret, time.Hour)
 
-	token, err := MakeJWT(userID, tokenSecret, expiresIn)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	tests := []struct {
+		name        string
+		tokenString string
+		tokenSecret string
+		wantErr     bool
+		wantUserID  uuid.UUID
+	}{
+		{"ValidToken", validToken, validTokenSecret, false, validUserID},
+		{"InvalidToken", "invalidtoken", validTokenSecret, true, uuid.Nil},
+		{"WrongSecret", validToken, "wrongsecret", true, uuid.Nil},
 	}
 
-	validatedUserID, err := ValidateJWT(token, tokenSecret)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	if validatedUserID != userID {
-		t.Fatalf("expected userID %v, got %v", userID, validatedUserID)
-	}
-
-	// Test with invalid token
-	_, err = ValidateJWT("invalidtoken", tokenSecret)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotUserID, err := ValidateJWT(tt.tokenString, tt.tokenSecret)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateJWT() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotUserID != tt.wantUserID {
+				t.Errorf("ValidateJWT() gotUserID = %v, want %v", gotUserID, tt.wantUserID)
+			}
+		})
 	}
 }

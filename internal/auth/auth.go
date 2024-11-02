@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -17,6 +18,11 @@ func CheckPasswordHash(password, hash string) error {
 }
 
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+	// Validate token secret
+	if len(tokenSecret) == 0 {
+		return "", errors.New("token secret cannot be empty")
+	}
+
 	// Signing key
 	signingKey := []byte(tokenSecret)
 
