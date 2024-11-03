@@ -11,11 +11,12 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-	Token     string    `json:"token"`
+	ID           uuid.UUID `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Email        string    `json:"email"`
+	Token        string    `json:"token"`
+	RefreshToken string    `json:"refresh_token"`
 }
 
 type CreateUserParams struct {
@@ -24,9 +25,8 @@ type CreateUserParams struct {
 }
 
 type LoginParams struct {
-	Password         string `json:"password"`
-	Email            string `json:"email"`
-	ExpiresInSeconds int    `json:"expires_in_seconds"`
+	Password string `json:"password"`
+	Email    string `json:"email"`
 }
 
 func (cfg *apiConfig) createUserHandler(rw http.ResponseWriter, rq *http.Request) {
@@ -155,13 +155,8 @@ func (cfg *apiConfig) loginHandler(rw http.ResponseWriter, rq *http.Request) {
 		return
 	}
 
-	// Check if token expiration is set
-	if params.ExpiresInSeconds == 0 {
-		params.ExpiresInSeconds = 3600
-	}
-
-	// Create JWT
-	token, err := auth.MakeJWT(dbUser.ID, cfg.tokenSecret, time.Second*time.Duration(params.ExpiresInSeconds))
+	// Create access token
+	token, err := auth.MakeJWT(dbUser.ID, cfg.tokenSecret, time.Second*time.Duration(3600))
 	if err != nil {
 		err = respondWithError(rw, http.StatusInternalServerError, "Error creating token")
 		if err != nil {
@@ -170,13 +165,39 @@ func (cfg *apiConfig) loginHandler(rw http.ResponseWriter, rq *http.Request) {
 		return
 	}
 
+	// Create refresh token
+	refreshToken, err := auth.MakeRefreshToken()
+	if err != nil {
+		err = respondWithError(rw, http.StatusInternalServerError, "Error creating refresh token")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Insert refresh token into database
+	dbParams := database.CreateRefreshTokenParams{
+		Token:  refreshToken,
+		UserID: dbUser.ID,
+	}
+
+	dbRefreshToken, err := cfg.db.CreateRefreshToken(rq.Context(), dbParams)
+	if err != nil {
+		err = respondWithError(rw, http.StatusInternalServerError, "Error creating refresh token")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
 	// Map database user to User struct
 	user := User{
-		ID:        dbUser.ID,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
-		Email:     dbUser.Email,
-		Token:     token,
+		ID:           dbUser.ID,
+		CreatedAt:    dbUser.CreatedAt,
+		UpdatedAt:    dbUser.UpdatedAt,
+		Email:        dbUser.Email,
+		Token:        token,
+		RefreshToken: dbRefreshToken.Token,
 	}
 
 	// Return user
