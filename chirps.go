@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/ehafenmaier/boot-dev-chirpy/internal/auth"
 	"github.com/ehafenmaier/boot-dev-chirpy/internal/database"
 	"github.com/google/uuid"
 	"log"
@@ -10,8 +11,7 @@ import (
 )
 
 type createChirpParams struct {
-	Body   string    `json:"body"`
-	UserID uuid.UUID `json:"user_id"`
+	Body string `json:"body"`
 }
 
 type Chirp struct {
@@ -37,6 +37,26 @@ func (cfg *apiConfig) createChirpHandler(rw http.ResponseWriter, rq *http.Reques
 		return
 	}
 
+	// Validate bearer token
+	token, err := auth.GetBearerToken(rq.Header)
+	if err != nil {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Validate JWT
+	userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
 	// Return error if chirp longer than 140 characters
 	if len(params.Body) > 140 {
 		err = respondWithError(rw, http.StatusBadRequest, "Chirp is too long")
@@ -49,7 +69,7 @@ func (cfg *apiConfig) createChirpHandler(rw http.ResponseWriter, rq *http.Reques
 	// Insert chirp into database
 	dbParams := database.CreateChirpParams{
 		Body:   replaceBadWords(params.Body),
-		UserID: params.UserID,
+		UserID: userID,
 	}
 
 	dbChirp, err := cfg.db.CreateChirp(rq.Context(), dbParams)
