@@ -15,6 +15,7 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
 }
 
 type CreateUserParams struct {
@@ -23,8 +24,9 @@ type CreateUserParams struct {
 }
 
 type LoginParams struct {
-	Password string `json:"password"`
-	Email    string `json:"email"`
+	Password         string `json:"password"`
+	Email            string `json:"email"`
+	ExpiresInSeconds int    `json:"expires_in_seconds"`
 }
 
 func (cfg *apiConfig) createUserHandler(rw http.ResponseWriter, rq *http.Request) {
@@ -153,12 +155,28 @@ func (cfg *apiConfig) loginHandler(rw http.ResponseWriter, rq *http.Request) {
 		return
 	}
 
+	// Check if token expiration is set
+	if params.ExpiresInSeconds == 0 {
+		params.ExpiresInSeconds = 3600
+	}
+
+	// Create JWT
+	token, err := auth.MakeJWT(dbUser.ID, cfg.tokenSecret, time.Second*time.Duration(params.ExpiresInSeconds))
+	if err != nil {
+		err = respondWithError(rw, http.StatusInternalServerError, "Error creating token")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
 	// Map database user to User struct
 	user := User{
 		ID:        dbUser.ID,
 		CreatedAt: dbUser.CreatedAt,
 		UpdatedAt: dbUser.UpdatedAt,
 		Email:     dbUser.Email,
+		Token:     token,
 	}
 
 	// Return user
