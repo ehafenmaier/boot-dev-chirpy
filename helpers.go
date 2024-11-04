@@ -10,17 +10,17 @@ type returnError struct {
 	Error string `json:"error"`
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) error {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
+func respondWithJSON(rw http.ResponseWriter, code int, payload interface{}) error {
+	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	rw.Header().Set("Content-Type", "application/json")
 
 	response, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
-	w.WriteHeader(code)
-	_, err = w.Write(response)
+	rw.WriteHeader(code)
+	_, err = rw.Write(response)
 	if err != nil {
 		return err
 	}
@@ -28,13 +28,13 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) error
 	return nil
 }
 
-func respondWithError(w http.ResponseWriter, code int, msg string) error {
-	return respondWithJSON(w, code, returnError{Error: msg})
+func respondWithError(rw http.ResponseWriter, code int, msg string) error {
+	return respondWithJSON(rw, code, returnError{Error: msg})
 }
 
-func respondWithNoContent(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.WriteHeader(http.StatusNoContent)
+func respondWithNoContent(rw http.ResponseWriter) {
+	rw.Header().Set("Access-Control-Allow-Origin", "*")
+	rw.WriteHeader(http.StatusNoContent)
 }
 
 func replaceBadWords(body string) string {
