@@ -59,6 +59,7 @@ func main() {
 	mux.HandleFunc("POST /api/login", cfg.loginHandler)
 	mux.HandleFunc("POST /api/refresh", cfg.tokenRefreshHandler)
 	mux.HandleFunc("POST /api/revoke", cfg.tokenRevokeHandler)
+	mux.HandleFunc("PUT /api/users", cfg.updateUserHandler)
 
 	// Create new server instance
 	srv := &http.Server{
