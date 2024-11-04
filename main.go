@@ -57,6 +57,8 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", cfg.getChirpsHandler)
 	mux.HandleFunc("GET /api/chirps/{id}", cfg.getChirpHandler)
 	mux.HandleFunc("POST /api/login", cfg.loginHandler)
+	mux.HandleFunc("POST /api/refresh", cfg.tokenRefreshHandler)
+	mux.HandleFunc("POST /api/revoke", cfg.tokenRevokeHandler)
 
 	// Create new server instance
 	srv := &http.Server{
