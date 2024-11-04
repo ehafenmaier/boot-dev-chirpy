@@ -15,18 +15,23 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	Email        string    `json:"email"`
-	Token        string    `json:"token"`
-	RefreshToken string    `json:"refresh_token"`
+	Token        string    `json:"token,omitempty"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
 }
 
 type CreateUserParams struct {
-	Password string `json:"password"`
 	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type LoginParams struct {
-	Password string `json:"password"`
 	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UpdateUserParams struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func (cfg *apiConfig) createUserHandler(rw http.ResponseWriter, rq *http.Request) {
@@ -198,6 +203,100 @@ func (cfg *apiConfig) loginHandler(rw http.ResponseWriter, rq *http.Request) {
 		Email:        dbUser.Email,
 		Token:        token,
 		RefreshToken: dbRefreshToken.Token,
+	}
+
+	// Return user
+	err = respondWithJSON(rw, http.StatusOK, user)
+	if err != nil {
+		log.Printf("Error responding: %v", err)
+	}
+}
+
+func (cfg *apiConfig) updateUserHandler(rw http.ResponseWriter, rq *http.Request) {
+	// Set response content type
+	rw.Header().Set("Content-Type", "application/json")
+
+	decoder := json.NewDecoder(rq.Body)
+	params := UpdateUserParams{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		err = respondWithError(rw, http.StatusInternalServerError, "Invalid request payload")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Validate bearer token
+	token, err := auth.GetBearerToken(rq.Header)
+	if err != nil {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Validate JWT
+	userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Return error if email property is missing or empty
+	if len(params.Email) == 0 {
+		err = respondWithError(rw, http.StatusBadRequest, "Email is required")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Return error if password property is missing or empty
+	if len(params.Password) == 0 {
+		err = respondWithError(rw, http.StatusBadRequest, "Password is required")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Hash user password
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		err = respondWithError(rw, http.StatusInternalServerError, "Error hashing password")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Update user in database
+	dbParams := database.UpdateUserParams{
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+		ID:             userID,
+	}
+
+	dbUser, err := cfg.db.UpdateUser(rq.Context(), dbParams)
+	if err != nil {
+		err = respondWithError(rw, http.StatusInternalServerError, "Error updating user")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Map database user to User struct
+	user := User{
+		ID:        dbUser.ID,
+		CreatedAt: dbUser.CreatedAt,
+		UpdatedAt: dbUser.UpdatedAt,
+		Email:     dbUser.Email,
 	}
 
 	// Return user
