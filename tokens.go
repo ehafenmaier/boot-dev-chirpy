@@ -94,9 +94,6 @@ func (cfg *apiConfig) tokenRevokeHandler(rw http.ResponseWriter, rq *http.Reques
 		return
 	}
 
-	// Respond with success
-	err = respondWithJSON(rw, http.StatusNoContent, nil)
-	if err != nil {
-		log.Printf("Error responding: %v", err)
-	}
+	// Respond with success (no content)
+	respondWithNoContent(rw)
 }

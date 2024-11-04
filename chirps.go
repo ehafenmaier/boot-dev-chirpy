@@ -233,9 +233,6 @@ func (cfg *apiConfig) deleteChirpHandler(rw http.ResponseWriter, rq *http.Reques
 		return
 	}
 
-	// Return success
-	err = respondWithJSON(rw, http.StatusNoContent, nil)
-	if err != nil {
-		log.Printf("Error responding: %v", err)
-	}
+	// Return success (no content)
+	respondWithNoContent(rw)
 }
