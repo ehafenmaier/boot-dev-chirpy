@@ -169,3 +169,73 @@ func (cfg *apiConfig) getChirpHandler(rw http.ResponseWriter, rq *http.Request) 
 		log.Printf("Error responding: %v", err)
 	}
 }
+
+func (cfg *apiConfig) deleteChirpHandler(rw http.ResponseWriter, rq *http.Request) {
+	// Set response content type
+	rw.Header().Set("Content-Type", "application/json")
+
+	// Get chirp ID from URL
+	id, err := uuid.Parse(rq.PathValue("id"))
+	if err != nil {
+		err = respondWithError(rw, http.StatusBadRequest, "Invalid chirp ID")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Validate bearer token
+	token, err := auth.GetBearerToken(rq.Header)
+	if err != nil {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Validate JWT
+	userID, err := auth.ValidateJWT(token, cfg.tokenSecret)
+	if err != nil {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Get chirp from database
+	dbChirp, err := cfg.db.GetChirpById(rq.Context(), id)
+	if err != nil {
+		err = respondWithError(rw, http.StatusNotFound, "Chirp not found")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Return error if user is not chirp owner
+	if dbChirp.UserID != userID {
+		err = respondWithError(rw, http.StatusForbidden, "Forbidden")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Delete chirp from database
+	err = cfg.db.DeleteChirp(rq.Context(), id)
+	if err != nil {
+		err = respondWithError(rw, http.StatusInternalServerError, "Error deleting chirp")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Return success
+	err = respondWithJSON(rw, http.StatusNoContent, nil)
+	if err != nil {
+		log.Printf("Error responding: %v", err)
+	}
+}
