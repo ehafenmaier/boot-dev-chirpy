@@ -94,6 +94,26 @@ func GetBearerToken(headers http.Header) (string, error) {
 	return authHeader[7:], nil
 }
 
+func GetAPIKey(headers http.Header) (string, error) {
+	// Get authorization header
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", errors.New("authorization header is missing")
+	}
+
+	// Check if authorization header is an API key
+	if len(authHeader) < 7 || authHeader[:7] != "ApiKey " {
+		return "", errors.New("authorization header is not an API key")
+	}
+
+	// Check if API key is empty
+	if len(authHeader[7:]) == 0 {
+		return "", errors.New("API key is empty")
+	}
+
+	return authHeader[7:], nil
+}
+
 func MakeRefreshToken() (string, error) {
 	// Generate random token
 	token := make([]byte, 32)
