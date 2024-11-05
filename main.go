@@ -16,6 +16,7 @@ type apiConfig struct {
 	db             *database.Queries
 	platform       string
 	tokenSecret    string
+	polkaKey       string
 }
 
 func main() {
@@ -45,6 +46,7 @@ func main() {
 		db:             database.New(db),
 		platform:       os.Getenv("PLATFORM"),
 		tokenSecret:    os.Getenv("TOKEN_SECRET"),
+		polkaKey:       os.Getenv("POLKA_KEY"),
 	}
 
 	// Register handler functions
