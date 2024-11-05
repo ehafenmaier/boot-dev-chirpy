@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/ehafenmaier/boot-dev-chirpy/internal/auth"
 	"github.com/google/uuid"
 	"log"
 	"net/http"
@@ -17,10 +18,29 @@ type PolkaWebhookParams struct {
 }
 
 func (cfg *apiConfig) polkaWebhookHandler(rw http.ResponseWriter, rq *http.Request) {
+	// Get API key from request header
+	key, err := auth.GetAPIKey(rq.Header)
+	if err != nil {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
+	// Validate API key
+	if key != cfg.polkaKey {
+		err = respondWithError(rw, http.StatusUnauthorized, "Unauthorized")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
 	// Decode request body
 	decoder := json.NewDecoder(rq.Body)
 	params := PolkaWebhookParams{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		err = respondWithError(rw, http.StatusInternalServerError, "Invalid request payload")
 		if err != nil {
