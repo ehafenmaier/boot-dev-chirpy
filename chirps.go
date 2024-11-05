@@ -23,9 +23,7 @@ type Chirp struct {
 }
 
 func (cfg *apiConfig) createChirpHandler(rw http.ResponseWriter, rq *http.Request) {
-	// Set response content type
-	rw.Header().Set("Content-Type", "application/json")
-
+	// Decode request body
 	decoder := json.NewDecoder(rq.Body)
 	params := createChirpParams{}
 	err := decoder.Decode(&params)
@@ -98,9 +96,6 @@ func (cfg *apiConfig) createChirpHandler(rw http.ResponseWriter, rq *http.Reques
 }
 
 func (cfg *apiConfig) getChirpsHandler(rw http.ResponseWriter, rq *http.Request) {
-	// Set response content type
-	rw.Header().Set("Content-Type", "application/json")
-
 	// Get chirps from database
 	dbChirps, err := cfg.db.GetChirps(rq.Context())
 	if err != nil {
@@ -131,9 +126,6 @@ func (cfg *apiConfig) getChirpsHandler(rw http.ResponseWriter, rq *http.Request)
 }
 
 func (cfg *apiConfig) getChirpHandler(rw http.ResponseWriter, rq *http.Request) {
-	// Set response content type
-	rw.Header().Set("Content-Type", "application/json")
-
 	// Get chirp ID from URL
 	id, err := uuid.Parse(rq.PathValue("id"))
 	if err != nil {
@@ -171,9 +163,6 @@ func (cfg *apiConfig) getChirpHandler(rw http.ResponseWriter, rq *http.Request) 
 }
 
 func (cfg *apiConfig) deleteChirpHandler(rw http.ResponseWriter, rq *http.Request) {
-	// Set response content type
-	rw.Header().Set("Content-Type", "application/json")
-
 	// Get chirp ID from URL
 	id, err := uuid.Parse(rq.PathValue("id"))
 	if err != nil {
