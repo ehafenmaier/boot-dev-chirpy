@@ -61,6 +61,7 @@ func main() {
 	mux.HandleFunc("POST /api/refresh", cfg.tokenRefreshHandler)
 	mux.HandleFunc("POST /api/revoke", cfg.tokenRevokeHandler)
 	mux.HandleFunc("PUT /api/users", cfg.updateUserHandler)
+	mux.HandleFunc("POST /api/polka/webhooks", cfg.polkaWebhookHandler)
 
 	// Create new server instance
 	srv := &http.Server{
