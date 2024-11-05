@@ -17,6 +17,7 @@ type User struct {
 	Email        string    `json:"email"`
 	Token        string    `json:"token,omitempty"`
 	RefreshToken string    `json:"refresh_token,omitempty"`
+	IsChirpyRed  bool      `json:"is_chirpy_red"`
 }
 
 type CreateUserParams struct {
@@ -94,10 +95,11 @@ func (cfg *apiConfig) createUserHandler(rw http.ResponseWriter, rq *http.Request
 
 	// Map database user to User struct
 	user := User{
-		ID:        dbUser.ID,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
-		Email:     dbUser.Email,
+		ID:          dbUser.ID,
+		CreatedAt:   dbUser.CreatedAt,
+		UpdatedAt:   dbUser.UpdatedAt,
+		Email:       dbUser.Email,
+		IsChirpyRed: dbUser.IsChirpyRed,
 	}
 
 	// Return user
@@ -203,6 +205,7 @@ func (cfg *apiConfig) loginHandler(rw http.ResponseWriter, rq *http.Request) {
 		Email:        dbUser.Email,
 		Token:        token,
 		RefreshToken: dbRefreshToken.Token,
+		IsChirpyRed:  dbUser.IsChirpyRed,
 	}
 
 	// Return user
@@ -293,10 +296,11 @@ func (cfg *apiConfig) updateUserHandler(rw http.ResponseWriter, rq *http.Request
 
 	// Map database user to User struct
 	user := User{
-		ID:        dbUser.ID,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
-		Email:     dbUser.Email,
+		ID:          dbUser.ID,
+		CreatedAt:   dbUser.CreatedAt,
+		UpdatedAt:   dbUser.UpdatedAt,
+		Email:       dbUser.Email,
+		IsChirpyRed: dbUser.IsChirpyRed,
 	}
 
 	// Return user
