@@ -96,6 +96,20 @@ func (cfg *apiConfig) createChirpHandler(rw http.ResponseWriter, rq *http.Reques
 }
 
 func (cfg *apiConfig) getChirpsHandler(rw http.ResponseWriter, rq *http.Request) {
+	// Check for sort parameter
+	sortParam := rq.URL.Query().Get("sort")
+	if len(sortParam) == 0 {
+		sortParam = "asc"
+	}
+
+	if sortParam != "asc" && sortParam != "desc" {
+		err := respondWithError(rw, http.StatusBadRequest, "Invalid sort parameter")
+		if err != nil {
+			log.Printf("Error responding: %v", err)
+		}
+		return
+	}
+
 	// Check for author id query parameter
 	authorParam := rq.URL.Query().Get("author_id")
 	if len(authorParam) > 0 {
@@ -109,7 +123,11 @@ func (cfg *apiConfig) getChirpsHandler(rw http.ResponseWriter, rq *http.Request)
 		}
 
 		// Get chirps by author from database
-		dbChirps, err := cfg.db.GetChirpsByUserId(rq.Context(), authorID)
+		dbParams := database.GetChirpsByUserIdParams{
+			UserID:  authorID,
+			Column2: sortParam,
+		}
+		dbChirps, err := cfg.db.GetChirpsByUserId(rq.Context(), dbParams)
 		if err != nil {
 			err = respondWithError(rw, http.StatusInternalServerError, "Error getting chirps")
 			if err != nil {
@@ -139,7 +157,7 @@ func (cfg *apiConfig) getChirpsHandler(rw http.ResponseWriter, rq *http.Request)
 	}
 
 	// Get chirps from database
-	dbChirps, err := cfg.db.GetChirps(rq.Context())
+	dbChirps, err := cfg.db.GetChirps(rq.Context(), sortParam)
 	if err != nil {
 		err = respondWithError(rw, http.StatusInternalServerError, "Error getting chirps")
 		if err != nil {
