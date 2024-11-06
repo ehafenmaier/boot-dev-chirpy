@@ -5,7 +5,12 @@ meta {
 }
 
 get {
-  url: {{base_url}}/api/chirps
+  url: {{base_url}}/api/chirps?sort=desc
   body: none
   auth: none
+}
+
+params:query {
+  sort: desc
+  ~author_id: a29556fb-b826-452b-995a-05e945a0549b
 }
